@@ -1,13 +1,12 @@
-import "dotenv/config";
 import httpStatus from "http-status";
-import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import User from "../models/User";
+import User from "../models/User.js";
+import { generateAccessAndRefreshTokens } from "../utils/generateAccessAndRefreshTokens.js";
 
 export const signUp = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        console.log("Request received --> /signup");
+        let { username, email, password } = req.body;
 
         if (!username || !email || !password) {
             console.log("Missing fields");
@@ -22,6 +21,10 @@ export const signUp = async (req, res) => {
             return (res.status(httpStatus.BAD_REQUEST).json({ message: "User Already Exists" }));
         }
 
+        if (typeof (password) !== "string") {
+            password = String(password);
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
             username,
@@ -30,8 +33,12 @@ export const signUp = async (req, res) => {
         });
         await user.save();
 
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user);
+        console.log(`Access Token : ${accessToken}`);
+        console.log(`Refresh Token : ${refreshToken}`);
+
         console.log("User Registered");
-        return (res.status(httpStatus.OK).json({ message: "User Registered" }));
+        return (res.status(httpStatus.OK).json({ message: "User Registered", accessToken }));
     } catch (err) {
         console.log("Error inside signup controller");
         console.log("Error : ", err.message);
@@ -41,7 +48,8 @@ export const signUp = async (req, res) => {
 
 export const signIn = async (req, res) => {
     try {
-        const { username, password } = req.body;
+        console.log("Request received --> /signin");
+        let { username, password } = req.body;
 
         if (!username || !password) {
             console.log("Missing fields");
@@ -54,14 +62,22 @@ export const signIn = async (req, res) => {
             return (res.status(httpStatus.NOT_FOUND).json({ message: "User not found!" }));
         }
 
+        if (typeof (password) !== "string") {
+            password = String(password);
+        }
+
         const pass = await bcrypt.compare(password, user.password);
         if (!pass) {
             console.log("Invalid Password");
             return (res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Password" }));
         }
 
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user);
+        console.log(`Access Token : ${accessToken}`);
+        console.log(`Refresh Token : ${refreshToken}`);
+
         console.log("User logged in");
-        return (res.status(httpStatus.OK).json({ message: "User logged in" }));
+        return (res.status(httpStatus.OK).json({ message: "User logged in", accessToken }));
     } catch (err) {
         console.log("Error inside signin controller");
         console.log("Error : ", err.message);

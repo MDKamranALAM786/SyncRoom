@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import http from "node:http";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import SocketServer from "./webSocket/socketServer.js";
 import connectDB from "./config/db/mongo.js";
@@ -17,6 +18,7 @@ const wss = SocketServer(server);
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
     return (res.send("Welcome to Chat Application"));

@@ -3,6 +3,11 @@ import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { generateAccessAndRefreshTokens } from "../utils/generateAccessAndRefreshTokens.js";
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: true
+};
+
 export const signUp = async (req, res) => {
     try {
         console.log("Request received --> /signup");
@@ -34,15 +39,16 @@ export const signUp = async (req, res) => {
         await user.save();
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user);
-        console.log(`Access Token : ${accessToken}`);
-        console.log(`Refresh Token : ${refreshToken}`);
-
         console.log("User Registered");
-        return (res.status(httpStatus.OK).json({ message: "User Registered", accessToken }));
+
+        return res.status(httpStatus.OK)
+            .cookie("refreshToken", refreshToken, cookieOptions)
+            .json({ message: "User Registered!", accessToken });
     } catch (err) {
         console.log("Error inside signup controller");
         console.log("Error : ", err.message);
-        return (res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: err.message }));
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR)
+            .json({ message: err.message });
     }
 };
 
@@ -73,13 +79,16 @@ export const signIn = async (req, res) => {
         }
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user);
-
         console.log("User logged in");
-        return (res.status(httpStatus.OK).json({ message: "User logged in", accessToken }));
+
+        return res.status(httpStatus.OK)
+            .cookie("refreshToken", refreshToken, cookieOptions)
+            .json({ message: "User logged in!", accessToken });
     } catch (err) {
         console.log("Error inside signin controller");
         console.log("Error : ", err.message);
-        return (res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: err.message }));
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR)
+            .json({ message: err.message });
     }
 };
 

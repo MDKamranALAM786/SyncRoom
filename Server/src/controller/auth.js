@@ -73,8 +73,6 @@ export const signIn = async (req, res) => {
         }
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user);
-        console.log(`Access Token : ${accessToken}`);
-        console.log(`Refresh Token : ${refreshToken}`);
 
         console.log("User logged in");
         return (res.status(httpStatus.OK).json({ message: "User logged in", accessToken }));

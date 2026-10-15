@@ -1,9 +1,10 @@
-import httpStatus from "http-status";
-
 export const generateAccessAndRefreshTokens = async (user) => {
     try {
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
+
+        console.log(`Access Token : ${accessToken}`);
+        console.log(`Refresh Token : ${refreshToken}`);
 
         user.refreshToken = refreshToken;
         await user.save();

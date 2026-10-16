@@ -13,7 +13,8 @@ export const signUp = async (req, res) => {
 
         if (!username || !email || !password) {
             console.log("Missing fields");
-            return (res.status(httpStatus.BAD_REQUEST).json({ message: "Missing Fields" }));
+            return res.status(httpStatus.BAD_REQUEST)
+                .json({ message: "Missing Fields" });
         }
 
         const userExists = await User.findOne({
@@ -21,7 +22,8 @@ export const signUp = async (req, res) => {
         });
         if (userExists) {
             console.log("User exists");
-            return (res.status(httpStatus.BAD_REQUEST).json({ message: "User Already Exists" }));
+            return res.status(httpStatus.BAD_REQUEST)
+                .json({ message: "User Already Exists" });
         }
 
         if (typeof (password) !== "string") {
@@ -57,13 +59,15 @@ export const signIn = async (req, res) => {
 
         if (!username || !password) {
             console.log("Missing fields");
-            return (res.status(httpStatus.BAD_REQUEST).json({ message: "Missing Fields" }));
+            return res.status(httpStatus.BAD_REQUEST)
+                .json({ message: "Missing Fields" });
         }
 
         const user = await User.findOne({ username });
         if (!user) {
             console.log("User not found");
-            return (res.status(httpStatus.NOT_FOUND).json({ message: "User not found!" }));
+            return res.status(httpStatus.NOT_FOUND)
+                .json({ message: "User not found!" });
         }
 
         if (typeof (password) !== "string") {
@@ -73,7 +77,8 @@ export const signIn = async (req, res) => {
         const pass = await bcrypt.compare(password, user.password);
         if (!pass) {
             console.log("Invalid Password");
-            return (res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Password" }));
+            return res.status(httpStatus.UNAUTHORIZED)
+                .json({ message: "Invalid Password" });
         }
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user);

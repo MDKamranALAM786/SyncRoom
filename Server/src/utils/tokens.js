@@ -1,6 +1,8 @@
+import "dotenv/config";
+
 export const cookieOptions = {
     httpOnly: true,
-    secure: true
+    secure: process.env.NODE_ENV === "production"
 };
 
 export const generateAccessAndRefreshTokens = async (user) => {
@@ -14,11 +16,21 @@ export const generateAccessAndRefreshTokens = async (user) => {
         user.refreshToken = refreshToken;
         await user.save();
 
-        return ({ accessToken, refreshToken });
+        return { accessToken, refreshToken };
     } catch (err) {
         console.log("Error in generateAccessAndRefreshTokens controller");
         console.log("Error : ", err.message);
-        throw (err);
+        throw err;
+    }
+};
+
+export const renewAccessToken = async (user) => {
+    try {
+        const accessToken = user.generateAccessToken();
+        return accessToken;
+    } catch (err) {
+        console.log(`Error in renew access token : ${err.message}`);
+        throw err;
     }
 };
 

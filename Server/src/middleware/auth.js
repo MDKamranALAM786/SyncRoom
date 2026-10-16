@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import httpStatus from "http-status";
 
 import User from "../models/User.js";
-import { cookieOptions } from "../utils/tokens.js";
+import { cookieOptions, renewAccessToken } from "../utils/tokens.js";
 
 export const verifyJWT = async (req, res, next) => {
     try {
@@ -19,36 +19,48 @@ export const verifyJWT = async (req, res, next) => {
                 .json({ message: "Missing Tokens" });
         }
 
-        if (accessToken) {
-            let decodedToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-            if (decodedToken) {
-                const user = await User.findById(decodedToken._id);
-                req.user = user;
-                return next();
-            }
+        let decodedToken;
 
-            console.log("Access Token Invalid or Expired");
+        if (accessToken) {
+            try {
+                decodedToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+                if (decodedToken) {
+                    const user = await User.findById(decodedToken._id);
+                    req.user = user;
+                    return next();
+                }
+            } catch (err) {
+                console.log(`Error in verifying access token : ${err.message}`);
+            }
         } else {
             console.log("Missing Access Token");
         }
 
         if (refreshToken) {
-            decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-            if (decodedToken) {
-                const user = await User.findById(decodedToken._id);
-                req.user = user;
-                return next();
-            } else {
+            try {
+                decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+                if (decodedToken) {
+                    const user = await User.findById(decodedToken._id);
+
+                    if (user && decodedToken === user.refreshToken) {
+                        req.user = user;
+                        req.accessToken = await renewAccessToken(user);
+                        return next();
+                    }
+
+                    console.log("User not found associated with the cookie refresh token");
+                    res.clearCookie("refreshToken", cookieOptions);
+                }
+            } catch (err) {
+                console.log(`Error in verifying refresh token : ${err.message}`);
                 res.clearCookie("refreshToken", cookieOptions);
             }
-
-            console.log("Refresh Token Invalid or Expired");
         } else {
             console.log("Missing Refresh Token");
         }
 
         return res.status(httpStatus.UNAUTHORIZED)
-            .json({ message: "Access and Refresh Tokens Inavlid or Expired" });
+            .json({ message: "Access and Refresh Tokens Invalid or Expired" });
     } catch (err) {
         console.log("Error in jwt middleware");
         console.log("Error : ", err.message);

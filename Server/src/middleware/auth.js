@@ -3,11 +3,15 @@ import jwt from "jsonwebtoken";
 import httpStatus from "http-status";
 
 import User from "../models/User.js";
+import { cookieOptions } from "../utils/tokens.js";
 
 export const verifyJWT = async (req, res, next) => {
     try {
-        const accessToken = req.headers?.authorization;
+        const accessToken = req.headers?.authorization?.split(" ")[1];
         const refreshToken = req.cookies?.refreshToken;
+
+        console.log(`Access Token : ${accessToken}`);
+        console.log(`Refresh Token : ${refreshToken}`);
 
         if (!accessToken && !refreshToken) {
             console.log("Missing Tokens in request body");
@@ -34,6 +38,8 @@ export const verifyJWT = async (req, res, next) => {
                 const user = await User.findById(decodedToken._id);
                 req.user = user;
                 return next();
+            } else {
+                res.clearCookie("refreshToken", cookieOptions);
             }
 
             console.log("Refresh Token Invalid or Expired");

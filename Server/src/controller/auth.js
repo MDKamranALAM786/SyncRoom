@@ -1,12 +1,10 @@
 import httpStatus from "http-status";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
-import { generateAccessAndRefreshTokens } from "../utils/generateAccessAndRefreshTokens.js";
-
-const cookieOptions = {
-    httpOnly: true,
-    secure: true
-};
+import {
+    cookieOptions,
+    generateAccessAndRefreshTokens
+} from "../utils/tokens.js";
 
 export const signUp = async (req, res) => {
     try {
@@ -86,6 +84,27 @@ export const signIn = async (req, res) => {
             .json({ message: "User logged in!", accessToken });
     } catch (err) {
         console.log("Error inside signin controller");
+        console.log("Error : ", err.message);
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR)
+            .json({ message: err.message });
+    }
+};
+
+export const logout = async (req, res) => {
+    try {
+        console.log("Request received --> /logout");
+
+        const user = req.user;
+        user.refreshToken = null;
+        await user.save();
+
+        res.clearCookie("refreshToken", cookieOptions);
+        console.log("User Logged Out");
+
+        return res.status(httpStatus.OK)
+            .json({ message: "User Logged Out!" });
+    } catch (err) {
+        console.log("Error in logout controller");
         console.log("Error : ", err.message);
         return res.status(httpStatus.INTERNAL_SERVER_ERROR)
             .json({ message: err.message });

@@ -1,3 +1,8 @@
+export const cookieOptions = {
+    httpOnly: true,
+    secure: true
+};
+
 export const generateAccessAndRefreshTokens = async (user) => {
     try {
         const accessToken = user.generateAccessToken();

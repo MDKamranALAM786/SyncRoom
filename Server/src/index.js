@@ -2,9 +2,11 @@ import "dotenv/config";
 import express from "express";
 import http from "node:http";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import SocketServer from "./webSocket/socketServer.js";
 import connectDB from "./config/db/mongo.js";
+import router from "./routes/router.js";
 
 const PORT = process.env.PORT || 8080;
 const app = express();
@@ -16,10 +18,13 @@ const wss = SocketServer(server);
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
     return (res.send("Welcome to Chat Application"));
 });
+
+app.use("/", router);
 
 const startServer = async () => {
     await connectDB();

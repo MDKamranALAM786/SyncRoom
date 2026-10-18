@@ -15,7 +15,22 @@ const server = http.createServer(app);
 
 const wss = SocketServer(server);
 
-app.use(cors());
+const allowedOrigins = [
+    process.env.ALLOWED_ORIGIN,
+    "http://localhost:5173"
+];
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("CORS : Origin Not Allowed"));
+        }
+    },
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());

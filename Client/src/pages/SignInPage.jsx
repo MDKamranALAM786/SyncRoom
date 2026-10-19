@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import '../../public/styles/AuthPage.css';
 
 /* ── Icons ─────────────────────────────────────────── */
@@ -52,10 +53,12 @@ function AuthLeft({ mode }) {
   return (
     <div className="auth-left">
       <div className="auth-topbar">
-        <div className="auth-topbar-brand">
-          <div className="auth-brand-icon"><Logo /></div>
-          SyncRoom
-        </div>
+        <Link to="/" className="nav-logo" id="nav-logo">
+          <div className="auth-topbar-brand">
+            <div className="auth-brand-icon"><Logo /></div>
+            SyncRoom
+          </div>
+        </Link>
         <div className="auth-topbar-right">
           {mode === 'signin' ? (
             <>Don't have an account?<Link to="/signup"> Sign Up</Link></>
@@ -111,15 +114,32 @@ function AuthLeft({ mode }) {
 
 /* ── Sign In Form ───────────────────────────────────── */
 function SignInForm() {
-  const [form, setForm] = useState({ email: '', password: '', remember: false });
+  const router = useNavigate();
+
+  const { handleLogin } = useContext(AuthContext);
+  const [form, setForm] = useState({ username: '', password: '', remember: false });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
+    console.log("Submitting Login Form");
+    console.log(form);
     e.preventDefault();
-    // TODO: wire up auth logic
-    console.log('Sign in:', form);
+    setError('');
+    setLoading(true);
+    try {
+      await handleLogin(form.username, form.password);
+      router("/home");
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Sign in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -132,17 +152,17 @@ function SignInForm() {
 
         <form className="auth-form" onSubmit={handleSubmit} id="signin-form">
           <div className="input-group">
-            <label htmlFor="signin-email">Email Address</label>
+            <label htmlFor="signin-username">Username</label>
             <div className="input-wrap">
               <EmailIcon />
               <input
-                id="signin-email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
+                id="signin-username"
+                name="username"
+                type="text"
+                placeholder="Enter your username"
+                value={form.username}
                 onChange={handleChange}
-                autoComplete="email"
+                autoComplete="username"
                 required
               />
             </div>
@@ -179,8 +199,10 @@ function SignInForm() {
             <a href="#" className="forgot-link" id="forgot-password-link">Forgot password?</a>
           </div>
 
-          <button type="submit" className="auth-submit" id="signin-submit-btn">
-            Sign In
+          {error && <p className="auth-error" role="alert">{error}</p>}
+
+          <button type="submit" className="auth-submit" id="signin-submit-btn" disabled={loading}>
+            {loading ? 'Signing In…' : 'Sign In'}
           </button>
 
           <div className="divider">or</div>
@@ -207,6 +229,7 @@ function SignInForm() {
 
 /* ── Sign In Page ───────────────────────────────────── */
 export default function SignInPage() {
+  // const router = useNavigate();
   return (
     <div className="auth-page">
       <AuthLeft mode="signin" />

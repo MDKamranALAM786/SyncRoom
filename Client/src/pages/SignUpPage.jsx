@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import '../../public/styles/AuthPage.css';
 
 /* ── Icons ─────────────────────────────────────────── */
@@ -58,10 +59,12 @@ function AuthLeft() {
   return (
     <div className="auth-left">
       <div className="auth-topbar">
-        <div className="auth-topbar-brand">
-          <div className="auth-brand-icon"><Logo /></div>
-          SyncRoom
-        </div>
+        <Link to="/" className="nav-logo" id="nav-logo">
+          <div className="auth-topbar-brand">
+            <div className="auth-brand-icon"><Logo /></div>
+            SyncRoom
+          </div>
+        </Link>
         <div className="auth-topbar-right">
           Already have an account?<Link to="/signin"> Sign In</Link>
         </div>
@@ -109,15 +112,30 @@ function AuthLeft() {
 
 /* ── Sign Up Form ───────────────────────────────────── */
 function SignUpForm() {
+  const router = useNavigate();
+
+  const { handleSignup } = useContext(AuthContext);
   const [form, setForm] = useState({ fullName: '', email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: wire up auth logic
-    console.log('Sign up:', form);
+    setError('');
+    setLoading(true);
+    try {
+      await handleSignup(form.fullName, form.email, form.password);
+      router("/home");
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Sign up failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -181,8 +199,10 @@ function SignUpForm() {
             </div>
           </div>
 
-          <button type="submit" className="auth-submit" id="signup-submit-btn">
-            Sign Up
+          {error && <p className="auth-error" role="alert">{error}</p>}
+
+          <button type="submit" className="auth-submit" id="signup-submit-btn" disabled={loading}>
+            {loading ? 'Creating Account…' : 'Sign Up'}
           </button>
 
           <div className="divider">or</div>

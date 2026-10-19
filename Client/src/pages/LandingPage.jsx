@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../../public/styles/LandingPage.css';
+import { AuthContext } from '../context/AuthContext.jsx';
 
 /* ── SVG Icons ─────────────────────────────────────── */
 const Logo = () => (
@@ -171,10 +172,10 @@ function Hero() {
           </p>
           <div className="hero-actions">
             <Link to="/signup" className="btn-primary" id="hero-create-btn">
-              Create a Room
+              Get Started
             </Link>
-            <Link to="/signin" className="btn-outline" id="hero-join-btn">
-              Join a Room
+            <Link to="/" className="btn-outline" id="hero-join-guest-btn">
+              Join as Guest
             </Link>
           </div>
           <p className="hero-note">
@@ -331,6 +332,15 @@ function Footer() {
 
 /* ── Page ────────────────────────────────────────────── */
 export default function LandingPage() {
+  const router = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router("/home");
+    }
+  });
+
   return (
     <>
       <Navbar />
